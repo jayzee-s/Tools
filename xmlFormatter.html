@@ -520,7 +520,7 @@
             <div class="shortcuts">
                 <kbd>Ctrl</kbd> + <kbd>Enter</kbd> Format &nbsp;·&nbsp;
                 <kbd>Ctrl</kbd> + <kbd>M</kbd> Minify &nbsp;·&nbsp;
-                <kbd>Ctrl</kbd> + <kbd>V</kbd> Validate
+                <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>V</kbd> Validate
             </div>
         </div>
     </div>
@@ -602,29 +602,47 @@
             }, 3000);
         }
 
-        // Format XML with proper indentation
+        // FIXED: Format XML with proper indentation
         function formatXMLString(xml) {
+            // Remove existing formatting and normalize
             let formatted = '';
             let indent = 0;
-            const lines = xml.split('\n');
+            const indentStr = '  ';
             
-            for (let line of lines) {
-                line = line.trim();
-                if (!line) continue;
+            // Remove comments and processing instructions for parsing
+            // But we'll keep them in the output
+            
+            // Split by tags while preserving content
+            const parts = xml.split(/(<[^>]+>)/g);
+            
+            for (let i = 0; i < parts.length; i++) {
+                const part = parts[i].trim();
+                if (!part) continue;
                 
-                // Check if it's a closing tag
-                if (line.match(/^<\//)) {
-                    indent--;
-                }
-                
-                // Add indentation
-                if (line) {
-                    formatted += '  '.repeat(Math.max(0, indent)) + line + '\n';
-                }
-                
-                // Check if it's an opening tag (not self-closing and not closing)
-                if (line.match(/^<[^\/!][^>]*>/) && !line.match(/\/>$/)) {
-                    indent++;
+                // Check if it's a tag
+                if (part.startsWith('<')) {
+                    // Check if it's a closing tag
+                    if (part.startsWith('</')) {
+                        indent--;
+                    }
+                    
+                    // Add indentation
+                    formatted += indentStr.repeat(Math.max(0, indent)) + part + '\n';
+                    
+                    // Check if it's an opening tag (not self-closing, not closing, not processing instruction)
+                    if (part.startsWith('<') && !part.startsWith('</') && !part.startsWith('<?') && !part.startsWith('<!') && !part.endsWith('/>')) {
+                        indent++;
+                    }
+                    
+                    // Check if it's a self-closing tag
+                    if (part.endsWith('/>')) {
+                        // Don't change indent
+                    }
+                } else {
+                    // Text content - add with current indent
+                    if (part.trim()) {
+                        formatted += indentStr.repeat(Math.max(0, indent)) + part.trim() + '\n';
+                    }
                 }
             }
             
@@ -633,8 +651,6 @@
 
         // Parse XML error from DOMParser
         function parseXMLError(errorText, xmlString) {
-            // Try to extract line number from error message
-            // Format: "error on line X at column Y: description"
             const lineMatch = errorText.match(/line (\d+)/i);
             const colMatch = errorText.match(/column (\d+)/i);
             
@@ -649,8 +665,6 @@
                 column = parseInt(colMatch[1]);
             }
             
-            // Clean up the error message
-            // Remove "This page contains the following errors:" and rendering info
             const cleanMatch = errorText.match(/error[:\s]+(.*?)(?:\s*Below|$)/i);
             if (cleanMatch) {
                 description = cleanMatch[1].trim();
@@ -685,11 +699,9 @@
             const lines = xmlString.split('\n');
             const parsed = parseXMLError(error.message, xmlString);
             
-            // Highlight error line
             if (parsed.line) {
                 errorLineNumber = parsed.line;
                 updateLineNumbers();
-                // Scroll to error line
                 const textarea = inputXML;
                 textarea.scrollTop = (parsed.line - 1) * 22.4;
                 textarea.focus();
@@ -713,7 +725,6 @@
             }
             errorHTML += `</div>`;
             
-            // Show context
             if (parsed.line) {
                 const context = getErrorContext(lines, parsed.line);
                 if (context) {
@@ -787,7 +798,6 @@
                     return;
                 }
 
-                // Validate first
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(raw, 'text/xml');
                 const parseError = doc.querySelector('parsererror');
@@ -893,7 +903,7 @@
             updateLineNumbers();
         }
 
-        // Load example with error for testing
+        // Load example
         function loadExample() {
             errorLineNumber = null;
             const example = `<?xml version="1.0" encoding="UTF-8"?>
@@ -925,41 +935,21 @@
             updateLineNumbers();
         }
 
-        // Load example with error for testing
-        function loadErrorExample() {
-            errorLineNumber = null;
-            const example = `<?xml version="1.0" encoding="UTF-8"?>
-<bookstore>
-    <book category="fiction">
-</book><boodk>
-        <title lang="en">The Great Gatsby</title>
-        <author>F. Scott Fitzgerald</author>
-        <year>1925</year>
-        <price currency="USD">12.99</price>
-    </book>
-</bookstore>`;
-
-            inputXML.value = example;
-            updateCharCount();
-            validateXML();
-            showToast('Loaded example with an error', 'warning');
-        }
-
         // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                formatXML();
-            }
-            if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
-                e.preventDefault();
-                minifyXML();
-            }
-            if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
-                e.preventDefault();
-                validateXML();
-            }
-        });
+		document.addEventListener('keydown', (e) => {
+			if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+				e.preventDefault();
+				formatXML();
+			}
+			if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
+				e.preventDefault();
+				minifyXML();
+			}
+			if ((e.ctrlKey || e.metaKey) && e.altKey && e.key === 'v') {
+				e.preventDefault();
+				validateXML();
+			}
+		});
 
         // Sync scroll
         inputXML.addEventListener('scroll', syncScroll);
@@ -980,9 +970,6 @@
             showToast(`Auto-format ${autoFormat ? 'enabled' : 'disabled'}`, 'info');
         });
 
-        // Expose error example to console
-        window.loadErrorExample = loadErrorExample;
-
         // Initialize
         updateLineNumbers();
         updateCharCount();
@@ -993,8 +980,7 @@
         console.log('💡 Keyboard shortcuts:');
         console.log('  • Ctrl+Enter → Format');
         console.log('  • Ctrl+M → Minify');
-        console.log('  • Ctrl+V → Validate');
-        console.log('💡 Run loadErrorExample() in console to test error handling');
+        console.log('  • Ctrl+Alt+V → Validate');
     </script>
 </body>
 </html>
