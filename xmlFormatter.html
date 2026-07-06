@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XML Formatter Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #f6f8fa 0%, #e1e4e8 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #24292e;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #24292e;
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 3px solid #0969da;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            color: #8b949e;
+            font-weight: 400;
+        }
+
+        .header .back-link {
+            color: #8b949e;
+            text-decoration: none;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .header .back-link:hover {
+            color: white;
+        }
+
+        .toolbar {
+            padding: 20px 30px;
+            background: #f6f8fa;
+            border-bottom: 1px solid #e1e4e8;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            background: white;
+            color: #24292e;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn:hover {
+            background: #f3f4f6;
+            border-color: #8b949e;
+        }
+
+        .btn-primary {
+            background: #0969da;
+            color: white;
+            border-color: #0969da;
+        }
+
+        .btn-primary:hover {
+            background: #0550ae;
+            border-color: #0550ae;
+        }
+
+        .btn-danger {
+            background: #da3633;
+            color: white;
+            border-color: #da3633;
+        }
+
+        .btn-danger:hover {
+            background: #c42b2b;
+            border-color: #c42b2b;
+        }
+
+        .btn-github {
+            background: #24292e;
+            color: white;
+            border-color: #24292e;
+        }
+
+        .btn-github:hover {
+            background: #1b1f23;
+            border-color: #1b1f23;
+        }
+
+        .editor-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+            min-height: 500px;
+        }
+
+        @media (max-width: 768px) {
+            .editor-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .editor-panel {
+            padding: 20px;
+            position: relative;
+        }
+
+        .editor-panel:first-child {
+            border-right: 1px solid #e1e4e8;
+        }
+
+        @media (max-width: 768px) {
+            .editor-panel:first-child {
+                border-right: none;
+                border-bottom: 1px solid #e1e4e8;
+            }
+        }
+
+        .panel-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #57606a;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-label .count {
+            font-weight: 400;
+            color: #8b949e;
+            font-size: 11px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            background: #fafbfc;
+            overflow: hidden;
+            min-height: 400px;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: #0969da;
+            box-shadow: 0 0 0 3px rgba(9, 105, 218, 0.3);
+        }
+
+        .line-numbers {
+            padding: 16px 8px 16px 12px;
+            font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #8b949e;
+            background: #f6f8fa;
+            text-align: right;
+            user-select: none;
+            min-width: 45px;
+            border-right: 1px solid #e1e4e8;
+            white-space: pre;
+            overflow: hidden;
+        }
+
+        .line-numbers .line-num {
+            display: block;
+            padding: 0;
+            min-height: 22.4px;
+        }
+
+        .line-numbers .line-num.error-line {
+            background: #ffd7d5;
+            color: #da3633;
+            font-weight: 700;
+            border-radius: 2px;
+        }
+
+        textarea {
+            flex: 1;
+            padding: 16px;
+            font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            border: none;
+            resize: vertical;
+            background: #fafbfc;
+            color: #24292e;
+            outline: none;
+            min-height: 400px;
+        }
+
+        textarea::placeholder {
+            color: #8b949e;
+        }
+
+        .preview {
+            min-height: 400px;
+            padding: 16px;
+            font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            background: #fafbfc;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            position: relative;
+        }
+
+        .preview.error {
+            color: #da3633;
+            background: #ffebe9;
+            border-color: #da3633;
+        }
+
+        .preview.success {
+            border-color: #0969da;
+        }
+
+        .preview .error-location {
+            background: #ffd7d5;
+            color: #da3633;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            border-left: 4px solid #da3633;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            white-space: normal;
+            word-break: normal;
+        }
+
+        .preview .error-location strong {
+            font-weight: 600;
+        }
+
+        .preview .error-details {
+            background: #ffebe9;
+            border: 1px solid #da3633;
+            border-radius: 6px;
+            padding: 16px;
+            margin-top: 12px;
+        }
+
+        .preview .error-details .error-title {
+            color: #da3633;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .preview .error-details .error-meta {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 4px 16px;
+            font-size: 13px;
+            color: #24292e;
+        }
+
+        .preview .error-details .error-meta .label {
+            color: #57606a;
+            font-weight: 500;
+        }
+
+        .preview .error-details .error-meta .value {
+            font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+        }
+
+        .preview .error-details .error-snippet {
+            margin-top: 12px;
+            background: #fff;
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #d0d7de;
+            font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .status-bar {
+            padding: 12px 30px;
+            background: #f6f8fa;
+            border-top: 1px solid #e1e4e8;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            color: #57606a;
+            cursor: default;
+        }
+
+        .status-bar .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .status-dot.valid {
+            background: #0969da;
+        }
+
+        .status-dot.invalid {
+            background: #da3633;
+        }
+
+        .status-dot.idle {
+            background: #8b949e;
+        }
+
+        .shortcuts {
+            font-size: 12px;
+            color: #8b949e;
+        }
+
+        .shortcuts kbd {
+            background: #f6f8fa;
+            border: 1px solid #d0d7de;
+            border-radius: 3px;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-family: inherit;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 14px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            font-size: 14px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            animation: fadeIn 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.success {
+            background: #0969da;
+        }
+
+        .toast.error {
+            background: #da3633;
+        }
+
+        .toast.info {
+            background: #1b1f23;
+        }
+
+        /* Scrollbar styling */
+        .preview::-webkit-scrollbar,
+        textarea::-webkit-scrollbar,
+        .line-numbers::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .preview::-webkit-scrollbar-track,
+        textarea::-webkit-scrollbar-track,
+        .line-numbers::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .preview::-webkit-scrollbar-thumb,
+        textarea::-webkit-scrollbar-thumb,
+        .line-numbers::-webkit-scrollbar-thumb {
+            background: #d0d7de;
+            border-radius: 4px;
+        }
+
+        .preview::-webkit-scrollbar-thumb:hover,
+        textarea::-webkit-scrollbar-thumb:hover,
+        .line-numbers::-webkit-scrollbar-thumb:hover {
+            background: #8b949e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <span>📄</span>
+                XML Formatter
+            </h1>
+            <span class="subtitle">GitHub Style · v1.0</span>
+            <a href="index.html" class="back-link">← Back to Tools</a>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button class="btn btn-primary" onclick="formatXML()">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M1 2.75A.75.75 0 011.75 2h12.5a.75.75 0 110 1.5H1.75A.75.75 0 011 2.75zm0 5A.75.75 0 011.75 7h12.5a.75.75 0 110 1.5H1.75A.75.75 0 011 7.75zM1.75 12h12.5a.75.75 0 110 1.5H1.75a.75.75 0 110-1.5z"/>
+                </svg>
+                Format
+            </button>
+            <button class="btn" onclick="minifyXML()">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M1 2.75A.75.75 0 011.75 2h12.5a.75.75 0 110 1.5H1.75A.75.75 0 011 2.75zm0 5A.75.75 0 011.75 7h12.5a.75.75 0 110 1.5H1.75A.75.75 0 011 7.75zM1.75 12h12.5a.75.75 0 110 1.5H1.75a.75.75 0 110-1.5z"/>
+                </svg>
+                Minify
+            </button>
+            <button class="btn" onclick="validateXML()">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 0C3.58 0 0 3.58 0 8s3.58 8 8 8 8-3.58 8-8-3.58-8-8-8zm3.78 5.72l-4.5 4.5a.75.75 0 01-1.06 0l-2-2a.75.75 0 011.06-1.06L6.75 8.44l3.97-3.97a.75.75 0 011.06 1.06z"/>
+                </svg>
+                Validate
+            </button>
+            <button class="btn" onclick="copyXML()">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z"/>
+                    <path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z"/>
+                </svg>
+                Copy
+            </button>
+            <button class="btn btn-danger" onclick="clearAll()">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M5.75 1.25a.75.75 0 01.75-.75h3.5a.75.75 0 01.75.75v.5h3.25a.75.75 0 010 1.5H2.75a.75.75 0 010-1.5H5.75v-.5z"/>
+                    <path d="M3.75 4.25a.75.75 0 011.5 0v8a.25.25 0 00.25.25h5.5a.25.25 0 00.25-.25v-8a.75.75 0 011.5 0v8A1.75 1.75 0 0111 14H5.25a1.75 1.75 0 01-1.75-1.75v-8z"/>
+                </svg>
+                Clear
+            </button>
+            <button class="btn btn-github" onclick="loadExample()">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                </svg>
+                Load Example
+            </button>
+            <span style="margin-left: auto; font-size: 13px; color: #57606a;">
+                <kbd>Ctrl+Enter</kbd> format
+            </span>
+        </div>
+
+        <!-- Editor -->
+        <div class="editor-container">
+            <div class="editor-panel">
+                <div class="panel-label">
+                    <span>📝 Input</span>
+                    <span class="count" id="charCount">0 characters</span>
+                </div>
+                <div class="input-wrapper" id="inputWrapper">
+                    <div class="line-numbers" id="lineNumbers"></div>
+                    <textarea id="inputXML" placeholder='Paste your XML here...' oninput="updateLineNumbers(); updateCharCount();"></textarea>
+                </div>
+            </div>
+            <div class="editor-panel">
+                <div class="panel-label">
+                    <span>✨ Output</span>
+                    <span class="count" id="outputCount">0 characters</span>
+                </div>
+                <div id="outputPreview" class="preview">Formatted XML will appear here...</div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <div class="status">
+                <span class="status-dot idle" id="statusDot"></span>
+                <span id="statusText">Ready</span>
+            </div>
+            <div class="shortcuts">
+                <kbd>Ctrl</kbd> + <kbd>Enter</kbd> Format &nbsp;·&nbsp;
+                <kbd>Ctrl</kbd> + <kbd>M</kbd> Minify &nbsp;·&nbsp;
+                <kbd>Ctrl</kbd> + <kbd>V</kbd> Validate
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const inputXML = document.getElementById('inputXML');
+        const outputPreview = document.getElementById('outputPreview');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const charCount = document.getElementById('charCount');
+        const outputCount = document.getElementById('outputCount');
+        const lineNumbers = document.getElementById('lineNumbers');
+
+        let errorLineNumber = null;
+
+        // Update line numbers
+        function updateLineNumbers() {
+            const lines = inputXML.value.split('\n');
+            const lineCount = lines.length;
+            
+            let html = '';
+            for (let i = 1; i <= lineCount; i++) {
+                let className = 'line-num';
+                if (i === errorLineNumber) {
+                    className += ' error-line';
+                }
+                html += `<span class="${className}">${i}</span>`;
+            }
+            lineNumbers.innerHTML = html;
+            syncScroll();
+        }
+
+        // Sync scrolling
+        function syncScroll() {
+            lineNumbers.scrollTop = inputXML.scrollTop;
+        }
+
+        // Update character count
+        function updateCharCount() {
+            const count = inputXML.value.length;
+            charCount.textContent = `${count} characters`;
+            updateLineNumbers();
+        }
+
+        // Update output count
+        function updateOutputCount(text) {
+            outputCount.textContent = `${text.length} characters`;
+        }
+
+        // Set status
+        function setStatus(type, message) {
+            statusDot.className = 'status-dot';
+            if (type === 'valid') {
+                statusDot.classList.add('valid');
+                statusText.textContent = message || '✓ Valid XML';
+                statusText.style.color = '#0969da';
+            } else if (type === 'invalid') {
+                statusDot.classList.add('invalid');
+                statusText.textContent = message || '✗ Invalid XML';
+                statusText.style.color = '#da3633';
+            } else {
+                statusDot.classList.add('idle');
+                statusText.textContent = message || 'Ready';
+                statusText.style.color = '#57606a';
+            }
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Format XML with proper indentation
+        function formatXMLString(xml) {
+            let formatted = '';
+            let indent = 0;
+            const lines = xml.split('\n');
+            
+            for (let line of lines) {
+                line = line.trim();
+                if (!line) continue;
+                
+                // Check if it's a closing tag
+                if (line.match(/^<\//)) {
+                    indent--;
+                }
+                
+                // Add indentation
+                if (line) {
+                    formatted += '  '.repeat(Math.max(0, indent)) + line + '\n';
+                }
+                
+                // Check if it's an opening tag (not self-closing and not closing)
+                if (line.match(/^<[^\/!][^>]*>/) && !line.match(/\/>$/)) {
+                    indent++;
+                }
+            }
+            
+            return formatted.trim();
+        }
+
+        // Parse XML error from DOMParser
+        function parseXMLError(errorText, xmlString) {
+            // Try to extract line number from error message
+            // Format: "error on line X at column Y: description"
+            const lineMatch = errorText.match(/line (\d+)/i);
+            const colMatch = errorText.match(/column (\d+)/i);
+            
+            let line = null;
+            let column = null;
+            let description = errorText;
+            
+            if (lineMatch) {
+                line = parseInt(lineMatch[1]);
+            }
+            if (colMatch) {
+                column = parseInt(colMatch[1]);
+            }
+            
+            // Clean up the error message
+            // Remove "This page contains the following errors:" and rendering info
+            const cleanMatch = errorText.match(/error[:\s]+(.*?)(?:\s*Below|$)/i);
+            if (cleanMatch) {
+                description = cleanMatch[1].trim();
+            }
+            
+            return { line, column, description };
+        }
+
+        // Get error context
+        function getErrorContext(lines, line) {
+            if (!line || line > lines.length) return null;
+            
+            const start = Math.max(0, line - 3);
+            const end = Math.min(lines.length, line + 2);
+            const context = [];
+            
+            for (let i = start; i < end; i++) {
+                const lineNum = i + 1;
+                const isErrorLine = lineNum === line;
+                context.push({
+                    lineNum,
+                    content: lines[i] || '',
+                    isErrorLine
+                });
+            }
+            
+            return context;
+        }
+
+        // Display error
+        function displayError(error, xmlString) {
+            const lines = xmlString.split('\n');
+            const parsed = parseXMLError(error.message, xmlString);
+            
+            // Highlight error line
+            if (parsed.line) {
+                errorLineNumber = parsed.line;
+                updateLineNumbers();
+                // Scroll to error line
+                const textarea = inputXML;
+                textarea.scrollTop = (parsed.line - 1) * 22.4;
+                textarea.focus();
+            } else {
+                errorLineNumber = null;
+                updateLineNumbers();
+            }
+            
+            let errorHTML = '<div class="error-location">';
+            errorHTML += `<strong>❌ XML Parse Error</strong><br>`;
+            errorHTML += `<span style="font-size: 13px;">${parsed.description || error.message}</span>`;
+            
+            errorHTML += `<div class="error-details" style="margin-top: 12px;">`;
+            errorHTML += `<div class="error-title">📍 Error Location</div>`;
+            errorHTML += `<div class="error-meta">`;
+            if (parsed.line) {
+                errorHTML += `<span class="label">Line:</span><span class="value">${parsed.line}</span>`;
+            }
+            if (parsed.column) {
+                errorHTML += `<span class="label">Column:</span><span class="value">${parsed.column}</span>`;
+            }
+            errorHTML += `</div>`;
+            
+            // Show context
+            if (parsed.line) {
+                const context = getErrorContext(lines, parsed.line);
+                if (context) {
+                    errorHTML += `<div class="error-title" style="margin-top: 12px;">📄 Context</div>`;
+                    errorHTML += `<div class="error-snippet">`;
+                    context.forEach(ctx => {
+                        const prefix = ctx.isErrorLine ? '▶ ' : '  ';
+                        const marker = ctx.isErrorLine ? '⚠️' : ' ';
+                        errorHTML += `<div>${marker} ${String(ctx.lineNum).padStart(3, ' ')} │ ${ctx.content}</div>`;
+                    });
+                    errorHTML += `</div>`;
+                }
+            }
+            
+            errorHTML += `</div>`;
+            errorHTML += '</div>';
+            return errorHTML;
+        }
+
+        // Validate XML
+        function validateXML() {
+            errorLineNumber = null;
+            try {
+                const raw = inputXML.value.trim();
+                if (!raw) {
+                    setStatus('idle', 'No input to validate');
+                    outputPreview.textContent = 'Please enter some XML to validate...';
+                    outputPreview.className = 'preview';
+                    updateOutputCount('');
+                    updateLineNumbers();
+                    return;
+                }
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(raw, 'text/xml');
+                const parseError = doc.querySelector('parsererror');
+                
+                if (parseError) {
+                    throw new Error(parseError.textContent);
+                }
+
+                const formatted = formatXMLString(raw);
+                outputPreview.textContent = formatted;
+                outputPreview.className = 'preview success';
+                updateOutputCount(formatted);
+                setStatus('valid', '✓ Valid XML document');
+                showToast('✓ XML is valid!', 'success');
+                updateLineNumbers();
+            } catch (e) {
+                const raw = inputXML.value.trim();
+                const errorHTML = displayError(e, raw);
+                outputPreview.innerHTML = errorHTML;
+                outputPreview.className = 'preview error';
+                updateOutputCount('');
+                setStatus('invalid', `✗ ${e.message}`);
+                showToast(`Invalid XML: ${e.message}`, 'error');
+            }
+        }
+
+        // Format XML
+        function formatXML() {
+            errorLineNumber = null;
+            try {
+                const raw = inputXML.value.trim();
+                if (!raw) {
+                    setStatus('idle', 'No input to format');
+                    outputPreview.textContent = 'Please enter some XML first...';
+                    outputPreview.className = 'preview';
+                    updateOutputCount('');
+                    updateLineNumbers();
+                    return;
+                }
+
+                // Validate first
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(raw, 'text/xml');
+                const parseError = doc.querySelector('parsererror');
+                
+                if (parseError) {
+                    throw new Error(parseError.textContent);
+                }
+
+                const formatted = formatXMLString(raw);
+                outputPreview.textContent = formatted;
+                outputPreview.className = 'preview success';
+                updateOutputCount(formatted);
+                setStatus('valid', `✓ Formatted successfully (${formatted.split('\n').length} lines)`);
+                showToast('XML formatted successfully!', 'success');
+                updateLineNumbers();
+            } catch (e) {
+                const raw = inputXML.value.trim();
+                const errorHTML = displayError(e, raw);
+                outputPreview.innerHTML = errorHTML;
+                outputPreview.className = 'preview error';
+                updateOutputCount('');
+                setStatus('invalid', `✗ ${e.message}`);
+                showToast(`Error: ${e.message}`, 'error');
+            }
+        }
+
+        // Minify XML
+        function minifyXML() {
+            errorLineNumber = null;
+            try {
+                const raw = inputXML.value.trim();
+                if (!raw) {
+                    setStatus('idle', 'No input to minify');
+                    outputPreview.textContent = 'Please enter some XML first...';
+                    outputPreview.className = 'preview';
+                    updateOutputCount('');
+                    updateLineNumbers();
+                    return;
+                }
+
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(raw, 'text/xml');
+                const parseError = doc.querySelector('parsererror');
+                
+                if (parseError) {
+                    throw new Error(parseError.textContent);
+                }
+
+                const minified = raw.replace(/>\s+</g, '><').replace(/\s+/g, ' ').trim();
+                outputPreview.textContent = minified;
+                outputPreview.className = 'preview success';
+                updateOutputCount(minified);
+                setStatus('valid', '✓ Minified successfully');
+                showToast('XML minified successfully!', 'success');
+                updateLineNumbers();
+            } catch (e) {
+                const raw = inputXML.value.trim();
+                const errorHTML = displayError(e, raw);
+                outputPreview.innerHTML = errorHTML;
+                outputPreview.className = 'preview error';
+                updateOutputCount('');
+                setStatus('invalid', `✗ ${e.message}`);
+                showToast(`Error: ${e.message}`, 'error');
+            }
+        }
+
+        // Copy to clipboard
+        function copyXML() {
+            const content = outputPreview.textContent;
+            if (!content || content.startsWith('Formatted XML will appear here...') || content.startsWith('Please enter')) {
+                showToast('Nothing to copy! Format or validate some XML first.', 'error');
+                return;
+            }
+
+            let textToCopy = content;
+            if (outputPreview.querySelector('.error-location')) {
+                textToCopy = outputPreview.textContent;
+            }
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showToast('✓ Copied to clipboard!', 'success');
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = textToCopy;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                textarea.remove();
+                showToast('✓ Copied to clipboard!', 'success');
+            });
+        }
+
+        // Clear all
+        function clearAll() {
+            errorLineNumber = null;
+            inputXML.value = '';
+            outputPreview.textContent = 'Formatted XML will appear here...';
+            outputPreview.className = 'preview';
+            updateCharCount();
+            updateOutputCount('');
+            setStatus('idle', 'Cleared');
+            showToast('Cleared all content', 'info');
+            updateLineNumbers();
+        }
+
+        // Load example with error for testing
+        function loadExample() {
+            errorLineNumber = null;
+            const example = `<?xml version="1.0" encoding="UTF-8"?>
+<bookstore>
+    <book category="fiction">
+        <title lang="en">The Great Gatsby</title>
+        <author>F. Scott Fitzgerald</author>
+        <year>1925</year>
+        <price currency="USD">12.99</price>
+    </book>
+    <book category="nonfiction">
+        <title lang="en">Sapiens</title>
+        <author>Yuval Noah Harari</author>
+        <year>2011</year>
+        <price currency="USD">18.99</price>
+    </book>
+    <book category="science">
+        <title lang="en">The Selfish Gene</title>
+        <author>Richard Dawkins</author>
+        <year>1976</year>
+        <price currency="USD">14.99</price>
+    </book>
+</bookstore>`;
+
+            inputXML.value = example;
+            updateCharCount();
+            formatXML();
+            showToast('Loaded example XML', 'info');
+            updateLineNumbers();
+        }
+
+        // Load example with error for testing
+        function loadErrorExample() {
+            errorLineNumber = null;
+            const example = `<?xml version="1.0" encoding="UTF-8"?>
+<bookstore>
+    <book category="fiction">
+</book><boodk>
+        <title lang="en">The Great Gatsby</title>
+        <author>F. Scott Fitzgerald</author>
+        <year>1925</year>
+        <price currency="USD">12.99</price>
+    </book>
+</bookstore>`;
+
+            inputXML.value = example;
+            updateCharCount();
+            validateXML();
+            showToast('Loaded example with an error', 'warning');
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                formatXML();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
+                e.preventDefault();
+                minifyXML();
+            }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'v') {
+                e.preventDefault();
+                validateXML();
+            }
+        });
+
+        // Sync scroll
+        inputXML.addEventListener('scroll', syncScroll);
+
+        // Auto-format
+        let autoFormat = false;
+        inputXML.addEventListener('paste', () => {
+            setTimeout(() => {
+                if (autoFormat) {
+                    formatXML();
+                }
+                updateLineNumbers();
+            }, 100);
+        });
+
+        document.querySelector('.status-bar').addEventListener('dblclick', () => {
+            autoFormat = !autoFormat;
+            showToast(`Auto-format ${autoFormat ? 'enabled' : 'disabled'}`, 'info');
+        });
+
+        // Expose error example to console
+        window.loadErrorExample = loadErrorExample;
+
+        // Initialize
+        updateLineNumbers();
+        updateCharCount();
+        updateOutputCount('');
+        setStatus('idle', 'Ready — paste your XML and click Format');
+
+        console.log('📄 XML Formatter loaded!');
+        console.log('💡 Keyboard shortcuts:');
+        console.log('  • Ctrl+Enter → Format');
+        console.log('  • Ctrl+M → Minify');
+        console.log('  • Ctrl+V → Validate');
+        console.log('💡 Run loadErrorExample() in console to test error handling');
+    </script>
+</body>
+</html>
